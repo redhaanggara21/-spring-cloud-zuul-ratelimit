@@ -1,0 +1,32 @@
+language: java
+dist: trusty
+sudo: false
+jdk:
+- oraclejdk11
+script:
+- "./mvnw --settings .ci/settings.xml install -Dmaven.test.skip=true -Dgpg.skip -Dmaven.javadoc.skip=true
+  -B -V -q"
+before_install:
+  - chmod -R ug+x .ci
+  - bash .ci/install.sh
+install:
+- "./mvnw --settings .ci/settings.xml install -Dmaven.test.skip=true -Dgpg.skip -Dmaven.javadoc.skip=true
+  -B -V -q"
+after_success:
+- "./mvnw -pl '!spring-cloud-zuul-ratelimit-dependencies' clean org.jacoco:jacoco-maven-plugin:prepare-agent
+  verify jacoco:report coveralls:report -q -Dlogging.level.root=ERROR"
+cache:
+  directories:
+  - "$HOME/.m2/repository"
+notifications:
+  email:
+  - marcos.hgb@gmail.com
+  - lchayoun@gmail.com
+deploy:
+- provider: script
+  script: bash .ci/deploy.sh
+  skip_cleanup: true
+  on:
+    branch: master
+    repo: marcosbarbero/spring-cloud-zuul-ratelimit
+    jdk: oraclejdk11
